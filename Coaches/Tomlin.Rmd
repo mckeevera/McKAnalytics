@@ -1,0 +1,151 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(stringr)
+library(ggrepel)
+
+```
+
+```{r}
+stats <- load_sharpe_games(2008:2023)
+```
+
+```{r}
+PIT <- stats %>%
+  filter(away_team == "PIT" | home_team == "PIT") %>%
+  filter(game_type == "REG")
+```
+
+```{r}
+away <- PIT %>%
+  select(season, away_team, away_score, result) 
+home <- PIT %>%
+  select(season, home_team, home_score, result) 
+```
+
+```{r}
+away <- away %>%
+  filter(away_team == "PIT") %>%
+  mutate(
+ win = case_when(
+  result > 0 ~ 0,
+  result < 0 ~ 1))
+home <- home %>%
+  filter(home_team == "PIT") %>%
+  mutate(
+ win = case_when(
+  result > 0 ~ 1,
+  result < 0 ~ 0))
+```
+
+```{r}
+away <- away %>%
+  rename(score = away_score,
+         team = away_team)
+home <- home %>%
+  rename(score = home_score,
+         team = home_team)
+```
+
+```{r}
+Tomlin <- rbind(home, away)
+```
+
+```{r}
+Tomlin[is.na(Tomlin)] <- 0.5
+```
+
+```{r}
+games <- Tomlin %>%
+group_by(season) %>%
+  summarise(
+    wins = sum(win),
+    points = sum(score),
+    games = n(),
+    team = team
+  )
+```
+
+```{r}
+games %>%
+  mutate(winrate = wins / games)
+```
+
+```{r}
+pbp <- load_pbp(2008:2023)
+```
+
+```{r}
+steelers <- pbp %>%
+  filter(posteam == "PIT") %>%
+  filter(play_type == "pass") %>%
+  filter(season_type == "REG")
+```
+
+```{r}
+steelers <- steelers[-6729,]
+```
+
+6729
+
+```{r}
+epat <- steelers %>%
+  group_by(season) %>%
+  summarise(
+    epa = mean(epa)
+  )
+```
+
+```{r}
+data <- games %>%
+  rename(team_abbr = team) %>%
+  left_join(epat) %>%
+  left_join(teams_colors_logos) %>%
+  mutate(winrate = wins / games) 
+```
+
+```{r}
+data <- data[!duplicated(data$season), ]
+
+```
+
+```{r}
+ggplot(data = data, mapping = aes(x = epa, y = winrate)) +
+  geom_point(mapping = aes(x = epa, y = winrate), size = 5) +
+geom_text_repel(mapping = aes(x = epa, y = winrate, label = season)) +
+geom_image(mapping = aes(x = epa, y = winrate, image = team_logo_espn), size = 0.05) +
+ylim(0, 0.875) +
+geom_vline(xintercept = 0.0) +
+  geom_hline(yintercept = 0.5) +
+
+theme_bw() +
+  labs(
+    x = "Passing EPA/Play",
+    y = "Win Rate",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    subtitle = "2008 - 2023 Regular Season",
+    title = "Mike Tomlin is Always Above Average"
+  ) +
+    geom_label(
+    label="Good QB Play", 
+    x=0.175,
+    y=0.25,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="#90D989"
+  ) +
+  
+        geom_label(
+    label="Bad QB Play", 
+    x=-0.1,
+    y=0.25,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="#DEA7E9"
+  ) 
+```
+
+```{r}
+```

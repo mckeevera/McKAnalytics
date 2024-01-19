@@ -1,0 +1,71 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(stringr)
+```
+
+```{r}
+data <- load_pbp(2023)
+```
+
+```{r}
+ngs <- load_nextgen_stats(2023)
+```
+
+```{r}
+stats <- load_sharpe_games(2008:2023)
+```
+
+```{r}
+fgs <- data %>%
+  filter(field_goal_attempt == 1) %>%
+group_by(kicker_player_name) %>%
+  mutate(Attempts = sum (field_goal_attempt))
+```
+
+```{r}
+kicker <- fgs %>%
+  group_by(kicker_player_name) %>%
+  summarise(
+    Attempts = n(),
+    Make = sum(str_count(field_goal_result, pattern = "made")),
+    Blocked = sum(str_count(field_goal_result, pattern = "blocked")),
+    Miss = sum(str_count(field_goal_result, pattern = "missed"))
+  )
+```
+
+```{r}
+kicker %>%
+  mutate(
+    Make_PCT = Make/Attempts
+  ) %>%
+  arrange(.,Attempts)
+```
+
+```{r}
+fgs2<- fgs
+```
+
+```{r}
+fgs2$field_goal_result <- factor(fgs2$field_goal_result, levels = c("blocked", "missed", "made"))
+
+```
+
+```{r}
+fgs2 %>% filter(kicker_player_name %in% c("H.Butker", "D.Hopkins", "B.Grupe", "B.McManus", "J.Tucker", "Y.Koo", "B.Aubrey", "C.Santos", "G.Zuerlein", "M.Gay")) %>%
+ggplot() +
+  geom_bar(mapping = aes(fill = field_goal_result, x = field_goal_attempt, y = reorder( kicker_player_name, Attempts)), position = "stack", stat = "identity") +
+    theme_bw() +
+  scale_fill_manual(values=c("black", "#de4a3a", "#42bd63")) +
+  labs(
+    x = "Number of Kicks",
+    y = "Kicker",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    subtitle = "Top 10 Kickers by Number of Attempts | 2023 Regular Season",
+    title = "Brandon Aubrey's (Almost) Perfect Season",
+    fill = "Kick Result"
+  )
+
+#ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+ #   geom_bar(position="stack", stat="identity")
+```

@@ -1,0 +1,301 @@
+```{r}
+library(tidyverse)
+
+```
+
+```{r}
+library(nflverse
+        )
+```
+
+```{r}
+data <- load_pbp(2023)
+```
+
+```{r}
+yards <- data %>%
+  filter(penalty == 0) %>%
+  filter(play_type == "pass") %>%
+    filter(incomplete_pass == 0) %>%
+    filter(interception == 0) %>%
+  filter(sack == 0) %>%
+  filter(two_point_attempt == 0) %>%
+  group_by(posteam) 
+```
+
+```{r}
+yards <- yards %>%
+  summarize(
+    Mean_YAC = mean(yards_after_catch),
+    Mean_AY = mean(air_yards),
+    n = n()
+  )
+```
+
+```{r}
+wr <- data %>% 
+  filter(penalty == 0) %>%
+  group_by(posteam, receiver, posteam_type) %>%
+  summarise(mean = mean(epa),
+            n = n()) %>%
+  filter(n > 25) %>%
+  pivot_wider(
+    names_from = posteam_type,
+    values_from = c(mean, n)) %>%
+  select(-c(mean_NA, n_NA)) %>%
+  na.omit() %>%
+  mutate(mean_diff = mean_home - mean_away)
+
+```
+
+```{r}
+wr2 <- wr2 %>%
+  mutate(color = case_when(
+  mean_diff > 0 ~ "home",
+  mean_diff < 0 ~ "road"))
+```
+
+```{r}
+
+ggplot(data = wr2) +
+  geom_col(mapping = aes(x = mean_diff, y = reorder(receiver, mean_diff), fill = color)) +
+  theme_light() + 
+  labs(
+    x = "Difference in EPA/Play (Home - Away)",
+    y = "Receiver",
+    title = "The WRs Who Play Better or Worse on the Road",
+    subtitle = "2023 Weeks 1-14 | Among WRs with 25 targets at home and on the road",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    fill = "Better at..."
+  )
+
+```
+
+```{r}
+testing <- wr %>%
+  slice_head(n = 12)
+```
+
+```{r}
+wr2 <- wr[c(1:10, 59:68),]
+```
+
+```{r}
+games <- load_sharpe_games()
+```
+
+```{r}
+games <- games %>%
+  filter(season == 2023) %>%
+  filter(week < 18)
+```
+
+```{r}
+games <- games[1:14]
+```
+
+```{r}
+games <- games[-(2:7)]
+```
+
+```{r}
+games <- games %>%
+  rename(home_result = result) %>%
+  mutate(away_result = away_score - home_score) %>%
+  select(-c(location, total))
+```
+
+```{r}
+home <- games %>%
+  select(c("home_team", "home_result"))
+away <- games %>%
+  select(c("away_team", "away_result")) %>%
+  rename(home_team = away_team,
+         home_result = away_result)
+```
+
+```{r}
+pd <- bind_rows(home, away)
+```
+
+```{r}
+#do this for pd after binding for total pd and total wins
+home <- home %>%
+  mutate(win = case_when(
+  home_result > 0 ~ 1,
+  home_result < 0 ~ 0))
+```
+
+```{r}
+away <- away %>%
+  mutate(win = case_when(
+  home_result > 0 ~ 1,
+  home_result < 0 ~ 0))
+```
+
+```{r}
+totals <- pd %>%
+  group_by(home_team) %>%
+  summarize(
+    wins = sum(win),
+    point_differential = sum(home_result)
+  )
+```
+
+```{r}
+totals_home <- home %>%
+  group_by(home_team) %>%
+  summarize(
+    wins = sum(win),
+    point_differential = sum(home_result)
+  )
+```
+
+```{r}
+totals_away <- away %>%
+  group_by(home_team) %>%
+  summarize(
+    wins = sum(win),
+    point_differential = sum(home_result)
+  ) %>%
+  rename(
+    away_wins = wins,
+    away_pd = point_differential
+  )
+```
+
+```{r}
+ha_totals <- totals_home %>%
+  left_join(totals_away) %>%
+  rename(
+    team_abbr = home_team
+  ) %>%
+  left_join(teams) %>%
+  mutate(wins_total = wins + away_wins)
+```
+
+```{r}
+teams <- load_teams()
+```
+
+```{r}
+totals <- totals %>%
+  rename(team_abbr = home_team) %>%
+  left_join(teams) %>%
+  filter(wins > 7)
+```
+
+```{r}
+library(ggimage)
+```
+
+```{r}
+ggplot(data = totals, mapping = aes(x = wins, y = point_differential)) +
+  geom_image(mapping = aes(x = wins, y = point_differential, image = team_logo_espn), size = 0.08) +
+    geom_smooth(method='lm', se = FALSE) +
+
+  theme_bw() +
+  labs(
+    x = "Wins",
+    y = "Point Differential",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    subtitle = "Teams below the line are 'luckier' and tend to win close games | 2023 Weeks 1-17",
+    title = "Which NFL Teams are 'Lucky' Update"
+  )
+```
+
+```{r}
+ggplot(data = ha_totals, mapping = aes(x = point_differential, y = away_pd)) +
+  geom_image(mapping = aes(x = point_differential, y = away_pd, image = team_logo_espn), size = 0.08) +
+  geom_abline(slope = 1, intercept = 0) +
+    geom_abline(slope = 0, intercept = 0, linetype = "dashed") +
+  geom_abline(slope = 99999999, intercept = 0, linetype = "dashed") +
+
+    theme_bw() +
+  labs(
+    x = "Home Point Differential",
+    y = "Away Point Differential",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    subtitle = "Teams to the right of the solid line outscore their oponent more at home than they do away | 2023 Weeks 1-17",
+    title = "Which NFL Teams Succeed at Home?"
+  )
+```
+
+```{r}
+yards <- yards %>%
+  rename(team_abbr = posteam) %>%
+  left_join(teams)
+```
+
+```{r}
+ggplot(data = yards, mapping = aes(x = Mean_YAC, y = Mean_AY)) +
+  geom_image(mapping = aes(x = Mean_YAC, y = Mean_AY, image = team_logo_espn), size = 0.08) +
+    geom_abline(slope = 0, intercept = mean(yards$Mean_AY), linetype = "dashed") +
+  geom_vline(xintercept = mean(yards$Mean_YAC), linetype = "dashed") +
+
+  
+  
+  geom_label(
+    label="Throws Far and High YAC", 
+    x=6.25,
+    y=6.8,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="#90D989"
+  ) +
+  
+    geom_label(
+    label="Throws Short and High YAC", 
+    x=6.25,
+    y=4.9,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="white"
+  ) +
+  
+      geom_label(
+    label="Throws Far and Low YAC", 
+    x=4.5,
+    y=7,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="white"
+  ) +
+  
+        geom_label(
+    label="Throws Short and Low YAC", 
+    x=4.5,
+    y=4.3,
+    label.padding = unit(0.4, "lines"),
+    label.size = 0.15,
+    color = "black",
+    fill="#DEA7E9"
+  ) +
+
+    theme_bw() +
+  labs(
+    x = "Average Yards After Catch per Completion",
+    y = "Average Air Yards per Completion",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    subtitle = "The 49ers have the most air yards and the most yards after the catch per catch this season | 2023 Weeks 1-17",
+    title = "Kyle Shanahan's Incredible Offense"
+  )
+```
+
+```{r}
+rice <- data %>%
+  filter(penalty == 0) %>%
+  filter(play_type == "pass") %>%
+    filter(incomplete_pass == 0) %>%
+    filter(interception == 0) %>%
+  filter(sack == 0) %>%
+  filter(two_point_attempt == 0) %>%
+  filter(receiver == "R.Rice")
+```
+
+```{r}
+sum(rice$yards_after_catch)
+```

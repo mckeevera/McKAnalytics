@@ -1,0 +1,88 @@
+```{r}
+library(tidyverse)
+library(nflverse)
+library(ggimage)
+data <- load_pbp(2023)
+```
+
+```{r}
+data <- data %>%
+  filter(solo_tackle == 1 | assist_tackle == 1)
+```
+
+```{r}
+data2 <- data %>%
+  pivot_longer(
+    c(solo_tackle_1_player_name, solo_tackle_2_player_name, assist_tackle_1_player_name, assist_tackle_2_player_name, assist_tackle_3_player_name, assist_tackle_4_player_name),
+    names_to = "Tackler"
+    
+  )
+```
+
+```{r}
+game <- data2 %>% 
+  group_by(game_id, value) %>%
+  summarise(n = n())
+```
+
+```{r}
+game <- na.omit(game)
+```
+
+```{r}
+squids <- game %>%
+  filter(n >= 10)
+```
+
+```{r}
+players <- load_players()
+```
+
+```{r}
+squids2 <- squids %>%
+  group_by(value) %>%
+  summarise(squid = n())
+```
+
+```{r}
+top_squid <- squids2 %>%
+  slice_max(squid, n = 12)
+```
+
+```{r}
+players <- players %>%
+  filter(status == "ACT") %>%
+  filter(position_group == "LB" | position_group == "DB")
+```
+
+```{r}
+top_squid_data <- top_squid %>%
+  rename(short_name = value) %>%
+  left_join(players)
+```
+
+```{r}
+teams <- load_teams()
+```
+
+```{r}
+top_squid_data <- top_squid_data %>%
+  left_join(teams)
+```
+
+```{r}
+ggplot(data = top_squid_data) +
+  geom_col(mapping = aes(x = squid, y = reorder(short_name, squid), fill = team_color)) +
+  scale_fill_identity() +
+  geom_image(mapping = aes(x = squid, y = reorder(short_name, squid), image = headshot), size = 0.12) +
+  theme_light() + 
+  labs(
+    x = "Number of Squids",
+    y = "Player",
+    title = "The 2023 Squid Leaders",
+    subtitle = "2023 Regular Season | A 'Squid' consists of having 10+ tackles and assists in a game",
+    caption = "Data from nflverse | Graphic by Alex McKeever"
+ ) +
+  theme(legend.position = "none")
+
+```
