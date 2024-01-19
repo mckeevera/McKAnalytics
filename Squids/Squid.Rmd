@@ -1,77 +1,88 @@
 ```{r}
+#Loading in library and required packages
 library(tidyverse)
 library(nflverse)
 library(ggimage)
 data <- load_pbp(2023)
+players <- load_players()
+teams <- load_teams()
 ```
 
 ```{r}
+#Filtering for tackle plays
 data <- data %>%
   filter(solo_tackle == 1 | assist_tackle == 1)
 ```
 
 ```{r}
-data2 <- data %>%
+#Making data so each entry consists of one player tackle
+data <- data %>%
   pivot_longer(
-    c(solo_tackle_1_player_name, solo_tackle_2_player_name, assist_tackle_1_player_name, assist_tackle_2_player_name, assist_tackle_3_player_name, assist_tackle_4_player_name),
-    names_to = "Tackler"
-    
+    c(solo_tackle_1_player_name, 
+      solo_tackle_2_player_name,
+      assist_tackle_1_player_name, 
+      assist_tackle_2_player_name, 
+      assist_tackle_3_player_name, 
+      assist_tackle_4_player_name),
+      names_to = "Tackler"
   )
 ```
 
 ```{r}
-game <- data2 %>% 
+#Tackles per game per player
+data <- data %>% 
   group_by(game_id, value) %>%
   summarise(n = n())
 ```
 
 ```{r}
-game <- na.omit(game)
+#Removing NA
+data <- na.omit(data)
 ```
 
 ```{r}
-squids <- game %>%
+#Filtering to only Squids
+data <- data %>%
   filter(n >= 10)
 ```
 
 ```{r}
-players <- load_players()
-```
-
-```{r}
-squids2 <- squids %>%
+#Counting Squids per player
+data <- data %>%
   group_by(value) %>%
   summarise(squid = n())
 ```
 
 ```{r}
-top_squid <- squids2 %>%
+#Taking the top twelve players in terms of number of Squids
+data <- data %>%
   slice_max(squid, n = 12)
 ```
 
 ```{r}
+#Little bit of fixing due to name overlaps
+  #May need to play with if reusing this code for a different year...
 players <- players %>%
   filter(status == "ACT") %>%
   filter(position_group == "LB" | position_group == "DB")
 ```
 
 ```{r}
-top_squid_data <- top_squid %>%
+#Joining with Players
+data <- data %>%
   rename(short_name = value) %>%
   left_join(players)
 ```
 
 ```{r}
-teams <- load_teams()
-```
-
-```{r}
-top_squid_data <- top_squid_data %>%
+#Joining with Teams
+data <- data %>%
   left_join(teams)
 ```
 
 ```{r}
-ggplot(data = top_squid_data) +
+#Making the plot
+ggplot(data = data) +
   geom_col(mapping = aes(x = squid, y = reorder(short_name, squid), fill = team_color)) +
   scale_fill_identity() +
   geom_image(mapping = aes(x = squid, y = reorder(short_name, squid), image = headshot), size = 0.12) +
