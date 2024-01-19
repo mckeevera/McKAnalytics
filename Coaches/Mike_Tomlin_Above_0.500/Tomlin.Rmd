@@ -1,29 +1,30 @@
 ```{r}
+#Loading in packages and data
 library(nflverse)
 library(tidyverse)
 library(stringr)
 library(ggrepel)
-
+data <- load_sharpe_games(2008:2023)
+pbp <- load_pbp(2008:2023)
 ```
 
 ```{r}
-stats <- load_sharpe_games(2008:2023)
-```
-
-```{r}
-PIT <- stats %>%
+#PIT games
+data <- data %>%
   filter(away_team == "PIT" | home_team == "PIT") %>%
   filter(game_type == "REG")
 ```
 
 ```{r}
-away <- PIT %>%
+#Home/Away splits
+away <- data %>%
   select(season, away_team, away_score, result) 
-home <- PIT %>%
+home <- data %>%
   select(season, home_team, home_score, result) 
 ```
 
 ```{r}
+#Did PIT win?
 away <- away %>%
   filter(away_team == "PIT") %>%
   mutate(
@@ -39,6 +40,7 @@ home <- home %>%
 ```
 
 ```{r}
+#Rename to help with rbind
 away <- away %>%
   rename(score = away_score,
          team = away_team)
@@ -48,15 +50,18 @@ home <- home %>%
 ```
 
 ```{r}
-Tomlin <- rbind(home, away)
+#Binding the data
+data <- rbind(home, away)
 ```
 
 ```{r}
-Tomlin[is.na(Tomlin)] <- 0.5
+#A tie is half a win
+data[is.na(data)] <- 0.5
 ```
 
 ```{r}
-games <- Tomlin %>%
+#Grouping by season
+data <- data %>%
 group_by(season) %>%
   summarise(
     wins = sum(win),
@@ -67,29 +72,27 @@ group_by(season) %>%
 ```
 
 ```{r}
-games %>%
+#Calculating Winrate
+data <- data %>%
   mutate(winrate = wins / games)
 ```
 
 ```{r}
-pbp <- load_pbp(2008:2023)
-```
-
-```{r}
-steelers <- pbp %>%
+#PIT pass plays in regular season
+pbp <- pbp %>%
   filter(posteam == "PIT") %>%
   filter(play_type == "pass") %>%
   filter(season_type == "REG")
 ```
 
 ```{r}
-steelers <- steelers[-6729,]
+#This entry doesn't have EPA
+pbp <- pbp[-6729,]
 ```
 
-6729
-
 ```{r}
-epat <- steelers %>%
+#Finding pass epa/play season average
+pbp <- pbp %>%
   group_by(season) %>%
   summarise(
     epa = mean(epa)
@@ -97,19 +100,21 @@ epat <- steelers %>%
 ```
 
 ```{r}
-data <- games %>%
+#Joining data
+data <- data %>%
   rename(team_abbr = team) %>%
-  left_join(epat) %>%
+  left_join(pbp) %>%
   left_join(teams_colors_logos) %>%
   mutate(winrate = wins / games) 
 ```
 
 ```{r}
+#Removing duplicated seasons to make plot render faster
 data <- data[!duplicated(data$season), ]
-
 ```
 
 ```{r}
+#Making the plot
 ggplot(data = data, mapping = aes(x = epa, y = winrate)) +
   geom_point(mapping = aes(x = epa, y = winrate), size = 5) +
 geom_text_repel(mapping = aes(x = epa, y = winrate, label = season)) +
@@ -145,7 +150,4 @@ theme_bw() +
     color = "black",
     fill="#DEA7E9"
   ) 
-```
-
-```{r}
 ```
