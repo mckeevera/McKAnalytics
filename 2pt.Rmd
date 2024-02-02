@@ -11,17 +11,18 @@ library(ggimage)
 
 ```{r}
 data <- data %>% 
-  filter(two_point_attempt == 1)
+  filter(two_point_attempt == 1) %>%
+  filter(penalty == 0)
 ```
 
 ```{r}
 data <- data %>%
   group_by(posteam) %>%
-  summarise(n = n(),
-            success = sum(yards_gained)/2)
+  mutate(attempts = n())
 ```
 
 ```{r}
+teams <- load_teams()
 data <- data %>% 
   rename(team_abbr = posteam) %>%
   left_join(teams)
@@ -29,18 +30,25 @@ data <- data %>%
 
 ```{r}
 #Making the plot
-ggplot(data = data) +
-  geom_col(mapping = aes(x = n, y = reorder(team_abbr, n), fill = team_color)) +
-  scale_fill_identity() +
-  geom_image(mapping = aes(x = n, y = reorder(team_abbr, n), image = team_logo_espn), size = 0.12) +
-  theme_light() + 
+data %>%
+ggplot() +
+  geom_bar(mapping = aes(fill = two_point_conv_result, x = two_point_attempt, y = reorder(team_abbr, attempts)), position = "stack", stat = "identity") +
+    scale_fill_manual(values=c("#de4a3a", "#42bd63")) +
+  theme_bw() +
+  geom_image(mapping = aes(x = attempts, y = reorder(team_abbr, attempts), image = team_logo_espn), size = 0.08) + 
   labs(
-    x = "Number of Squids",
-    y = "Player",
-    title = "The 2023 Squid Leaders",
-    subtitle = "2023 Regular Season | A 'Squid' consists of having 10+ tackles and assists in a game",
-    caption = "Data from nflverse | Graphic by Alex McKeever"
- ) +
-  theme(legend.position = "none")
+    x = "Number of 2-Point Tries",
+    y = "Team",
+    title = "The 2023 2-Point Tries",
+    subtitle = "2023 Regular sans Super Bowl | Excluding Penalties",
+    caption = "Data from nflverse | Graphic by Alex McKeever",
+    fill = "Result"
+ ) 
 
+
+
+
+```
+
+```         
 ```

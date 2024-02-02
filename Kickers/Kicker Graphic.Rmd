@@ -53,8 +53,10 @@ fgs2$field_goal_result <- factor(fgs2$field_goal_result, levels = c("blocked", "
 
 ```{r}
 fgs2 %>% filter(kicker_player_name %in% c("H.Butker", "D.Hopkins", "B.Grupe", "B.McManus", "J.Tucker", "Y.Koo", "B.Aubrey", "C.Santos", "G.Zuerlein", "M.Gay")) %>%
+  
+  
 ggplot() +
-  geom_bar(mapping = aes(fill = field_goal_result, x = field_goal_attempt, y = reorder( kicker_player_name, Attempts)), position = "stack", stat = "identity") +
+  geom_bar(mapping = aes(fill = field_goal_result, x = field_goal_attempt, y = reorder(kicker_player_name, Attempts)), position = "stack", stat = "identity") +
     theme_bw() +
   scale_fill_manual(values=c("black", "#de4a3a", "#42bd63")) +
   labs(
