@@ -1,0 +1,77 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(ggimage)
+```
+
+```{r}
+data <- load_pbp(2023)
+```
+
+```{r}
+data <- data %>%
+  filter(penalty == 0) %>%
+  filter(season_type == "REG") %>%
+  filter(two_point_attempt == 0)
+```
+
+```{r}
+data2 <- data %>%
+  pivot_longer(
+    cols = c(receiver, rusher),
+    names_to = "player"
+)
+```
+
+```{r}
+data3 <- data2 %>%
+  group_by(value, posteam) %>%
+  summarise(
+    TDs = sum(touchdown),
+    YDS = sum(yards_gained)
+  )
+```
+
+```{r}
+players <- load_players()
+```
+
+```{r}
+players <- players %>%
+  filter(status == "ACT") %>%
+  filter(position == "WR" | position == "TE" | position == "RB" | position == "FB")
+```
+
+```{r}
+#players$short_name[17] <- "Ju.Watson
+```
+
+```{r}
+data4 <- data3 %>%
+  rename(short_name = value,
+         team_abbr = posteam) %>%
+  inner_join(players, join_by(short_name, team_abbr))
+```
+
+```{r}
+data4 <- data4 %>%
+  filter(YDS < 3000) %>%
+  filter(YDS > 1000)
+```
+
+```{r}
+ggplot(data = data4, mapping = aes(x = YDS, y = TDs)) +
+  geom_image(mapping = aes(x = YDS, y = TDs, image = headshot), size = 0.15) +
+  
+  
+theme_bw() +
+
+  labs(
+    x = "Scrimmage Yards",
+    y = "Touchdowns",
+    title = "The Important Super Bowl LVIII Players",
+    subtitle = "2023 Regular Season (Players with > 1000 yards)",
+    caption = "Data from nflverse | Graphic by Alex McKeever"
+ ) +
+  theme(legend.position = "none")
+```
