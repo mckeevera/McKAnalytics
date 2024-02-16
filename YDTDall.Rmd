@@ -54,13 +54,13 @@ data4 <- data3 %>%
 ```
 
 ```{r}
-data4 <- data4 %>%
+data5 <- data4 %>%
   filter(YDS < 3000) %>%
-  filter(YDS > 1000)
+  filter(YDS > 1200 | TDs > 8)
 ```
 
 ```{r}
-ggplot(data = data4, mapping = aes(x = YDS, y = TDs)) +
+ggplot(data = data5, mapping = aes(x = YDS, y = TDs)) +
   geom_image(mapping = aes(x = YDS, y = TDs, image = headshot), size = 0.15) +
   
   
@@ -69,8 +69,8 @@ theme_bw() +
   labs(
     x = "Scrimmage Yards",
     y = "Touchdowns",
-    title = "The Important Super Bowl LVIII Players",
-    subtitle = "2023 Regular Season (Players with > 1000 yards)",
+    title = "",
+    subtitle = "2023 Regular Season (Players with > 1200 yards or > 8 TDs)",
     caption = "Data from nflverse | Graphic by Alex McKeever"
  ) +
   theme(legend.position = "none")
