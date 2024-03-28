@@ -3,7 +3,7 @@ This is a Repo for Alex McKeever's NFL Statistical Work
 Files are roughly sorted by player position (wide receiver files are in WRs, kicker files in Kickers) though there are some exceptions
 Each project should be within its own folder with a readme describing what the purpose of the file is
 
-I am currently working on cleaning up code and adding comments to the existing files before I start creating new projects
+Over the summer (and hopefully during some free time during Spring Term) I will be working through two NFL analytics books
 
 All data is taken from the NFLverse at this point in time
 
