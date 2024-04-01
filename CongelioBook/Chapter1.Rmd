@@ -1,0 +1,89 @@
+---
+
+---
+
+```{r}
+library(nflverse)
+library(tidyverse)
+library(espnscrapeR)
+```
+
+### 1.1
+
+Communicating your findings (to the audience that you are aiming for) is crucial. Statistics are amazing as every statistician knows, but we need to communicate results to those who may not be majoring or have a PhD in statistics.
+
+### 1.2
+
+1.  Identify a question
+2.  Collect your data (this is potentially the tricky part!)
+3.  Clean your data
+4.  Analyze your data
+5.  Visualize!
+    1.  What do you want to communicate and who are you showing this graphic to?
+6.  
+
+### 1.3 - Rams 2022 Oline
+
+An issue - load_snap_counts and load_participation shows us that some plays have weird personal line ups! Take for example, the Cowboys return fumble for a touchdown near the start of their game against the Rams. The extra point is blocked and therefore technically a rush. Thus lets make some decisions.
+
+```{r}
+oline_snap_counts <- load_snap_counts(seasons = 2022)
+
+#Top 5 Oline in each game for each team by snap percentage
+oline_snap_counts <- oline_snap_counts %>%
+  select(game_id, week, player, position, team, offense_pct) %>%
+  filter(position %in% c("T", "G", "C")) %>%
+  group_by(game_id, team) %>%
+  arrange(-offense_pct) %>%
+  slice(1:5) %>%
+  ungroup()
+```
+
+```{r}
+#Finding the 'starting offensive line'
+oline_snap_counts <- oline_snap_counts %>%
+  group_by(game_id, team) %>%
+  arrange(player, .by_group = TRUE)
+
+oline_final_data <- oline_snap_counts %>%
+  group_by(game_id, week, team) %>%
+  mutate(starting_line = toString(player)) %>%
+  select(game_id, week, team, starting_line) %>%
+  distinct(game_id, .keep_all = TRUE)
+```
+
+```{r}
+#How many unique starting lines?
+total_combos <- oline_final_data %>%
+  group_by(team) %>%
+  summarize(combos = n_distinct(starting_line)) %>%
+  arrange(-combos)
+```
+
+```{r}
+records <- espnscrapeR::get_nfl_standings(season = 2022) %>%
+  select(team_abb, win_pct)
+
+records$team_abb <- clean_team_abbrs(records$team_abb)
+
+total_combos <- total_combos %>%
+  left_join(records, by = c("team" = "team_abb"))
+```
+
+### 1.4
+
+### 1.5
+
+### 1.6
+
+### 1.7
+
+### 1.8
+
+### 1.9
+
+### 1.10
+
+### 1.11
+
+### 1.12
