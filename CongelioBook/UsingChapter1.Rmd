@@ -1,0 +1,126 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(espnscrapeR)
+library(scales)
+```
+
+```{r}
+wr_snap_counts <- load_snap_counts(seasons = 2021)
+
+#Top 5 Oline in each game for each team by snap percentage
+wr_snap_counts <- wr_snap_counts %>%
+  select(game_id, week, player, position, team, offense_pct) %>%
+  filter(position == "WR") %>%
+  group_by(game_id, team) %>%
+  arrange(-offense_pct) %>%
+  slice(1:3) %>%
+  ungroup()
+```
+
+```{r}
+#Finding the 'starting WR corp'
+wr_snap_counts <- wr_snap_counts %>%
+  group_by(game_id, team) %>%
+  arrange(player, .by_group = TRUE)
+
+wr_final_data <- wr_snap_counts %>%
+  group_by(game_id, week, team) %>%
+  mutate(starting_line = toString(player)) %>%
+  select(game_id, week, team, starting_line) %>%
+  distinct(game_id, .keep_all = TRUE)
+```
+
+```{r}
+#How many unique starting lines?
+wr_total_combos <- wr_final_data %>%
+  group_by(team) %>%
+  filter(week <= 18) %>%
+  summarize(combos = n_distinct(starting_line)) %>%
+  arrange(-combos) 
+```
+
+```{r}
+records_21 <- espnscrapeR::get_nfl_standings(season = 2021) %>%
+  select(team_abb, win_pct)
+
+records_21$team_abb <- clean_team_abbrs(records_21$team_abb)
+
+wr_total_combos <- wr_total_combos %>%
+  left_join(records_21, by = c("team" = "team_abb"))
+```
+
+```{r}
+ggplot(data = wr_total_combos, aes(x = combos, y = win_pct)) +
+  geom_line(stat = "smooth", method = "lm", color = "blue", linewidth = 1, alpha = 0.55) +
+  nflplotR::geom_mean_lines(aes(v_var = combos, h_var = win_pct), color = "black") +
+  nflplotR::geom_nfl_logos(aes(team_abbr = team), width = 0.075, alpha = 0.75) +
+  scale_x_reverse(breaks = pretty_breaks(n = 12)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 6),
+                     labels = label_number(accuracy = 0.001)) +
+  labs(x = "Number of Unique Wide Receiver Cores",
+       y = "Season Win Percentage",
+       title = "How Important is Receiver Stability?",
+       subtitle = "2021 Regular Season | Wide Reciever Core Consists of the Top 3 WRs",
+       caption = "Data from NFLverse | Code inspired by Brad J. Congelio | Graphic by Alex McKeever") +
+  theme_bw() 
+```
+
+```{r}
+skill_snap_counts <- load_snap_counts(seasons = 2021)
+
+#Top 5 Oline in each game for each team by snap percentage
+skill_snap_counts <- skill_snap_counts %>%
+  select(game_id, week, player, position, team, offense_pct) %>%
+  filter(position == "WR" | position == "RB" | position == "TE") %>%
+  group_by(game_id, team) %>%
+  arrange(-offense_pct) %>%
+  slice(1:5) %>%
+  ungroup()
+```
+
+```{r}
+#Finding the 'starting WR corp'
+skill_snap_counts <- skill_snap_counts %>%
+  group_by(game_id, team) %>%
+  arrange(player, .by_group = TRUE)
+
+skill_final_data <- skill_snap_counts %>%
+  group_by(game_id, week, team) %>%
+  mutate(starting_line = toString(player)) %>%
+  select(game_id, week, team, starting_line) %>%
+  distinct(game_id, .keep_all = TRUE)
+
+#How many unique starting lines?
+skill_total_combos <- skill_final_data %>%
+  group_by(team) %>%
+  filter(week <= 18) %>%
+  summarize(combos = n_distinct(starting_line)) %>%
+  arrange(-combos) 
+```
+
+```{r}
+records_21 <- espnscrapeR::get_nfl_standings(season = 2021) %>%
+  select(team_abb, win_pct)
+
+records_21$team_abb <- clean_team_abbrs(records_21$team_abb)
+
+skill_total_combos <- skill_total_combos %>%
+  left_join(records_21, by = c("team" = "team_abb"))
+```
+
+```{r}
+ggplot(data = skill_total_combos, aes(x = combos, y = win_pct)) +
+  geom_line(stat = "smooth", method = "lm", color = "blue", linewidth = 1, alpha = 0.55) +
+  nflplotR::geom_mean_lines(aes(v_var = combos, h_var = win_pct), color = "black") +
+  nflplotR::geom_nfl_logos(aes(team_abbr = team), width = 0.075, alpha = 0.75) +
+  scale_x_reverse(breaks = pretty_breaks(n = 12)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 6),
+                     labels = label_number(accuracy = 0.001)) +
+  labs(x = "Number of Unique Skill Player Cores",
+       y = "Season Win Percentage",
+       title = "How Important is Skill Player Stability?",
+       subtitle = "2021 Regular Season | Wide Reciever Core Consists of the Top 5 WRs, RBs, and TEs by Playing Time",
+       caption = "Data from NFLverse | Code inspired by Brad J. Congelio | Graphic by Alex McKeever") +
+  theme_bw() 
+```

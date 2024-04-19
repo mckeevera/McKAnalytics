@@ -1,11 +1,12 @@
----
+------------------------------------------------------------------------
 
----
+------------------------------------------------------------------------
 
 ```{r}
 library(nflverse)
 library(tidyverse)
 library(espnscrapeR)
+library(scales)
 ```
 
 ### 1.1
@@ -68,6 +69,31 @@ records$team_abb <- clean_team_abbrs(records$team_abb)
 
 total_combos <- total_combos %>%
   left_join(records, by = c("team" = "team_abb"))
+```
+
+```{r}
+nfl_analytics_theme <- function(..., base_size = 12){
+  theme(
+  text = element_text(size = base_size),
+  axis
+  )
+}
+```
+
+```{r}
+ggplot(data = total_combos, aes(x = combos, y = win_pct)) +
+  geom_line(stat = "smooth", method = "lm", color = "blue", linewidth = 1, alpha = 0.55) +
+  nflplotR::geom_mean_lines(aes(v_var = combos, h_var = win_pct), color = "black") +
+  nflplotR::geom_nfl_logos(aes(team_abbr = team), width = 0.075, alpha = 0.8) +
+  scale_x_reverse(breaks = pretty_breaks(n = 12)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 6),
+                     labels = label_number(accuracy = 0.001)) +
+  labs(x = "Number of Unique Offensive Line Combinations",
+       y = "Win Percentage",
+       title = "Unique Offensice Line Combinations vs. Win Percentage",
+       subtitle = "Through Week 15",
+       caption = "Data from NFLverse | Code inspired by Brad J. Congelio | Graphic by Alex McKeever") +
+  theme_bw() 
 ```
 
 ### 1.4

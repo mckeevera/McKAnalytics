@@ -1,0 +1,85 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(ggimage)
+library(ggrepel)
+library(scales)
+
+```
+
+```{r}
+players <- load_players()
+```
+
+```{r}
+data <- read.csv("Cowboys2.csv")
+```
+
+```{r}
+players <- players %>% 
+  filter(team_abbr == "DAL") %>%
+  filter(position == "QB") %>%
+  rename(Player = display_name)
+```
+
+```{r}
+my_data <- data %>%
+  left_join(players)
+```
+
+```{r}
+my_data2<- my_data %>%
+  select(c("Player","Year","Yds","TD","headshot","Rate"))
+```
+
+```{r}
+my_data2[8,5] <- "https://i0.wp.com/insidethestar.com/wp-content/uploads/2015/09/cowboys-ctk-quarterbackpunter-danny-white-owns-11.jpg?fit=973%2C1350&ssl=1"
+```
+
+```{r}
+# Bledsoe
+my_data2[13,5] <- "https://vz.cnwimg.com/wp-content/uploads/2011/04/Drew-Bledsoe.jpg?x13210"
+
+#Rodger
+my_data2[14,5] <- "https://img.bleacherreport.net/img/images/photos/003/151/393/hi-res-3da57a4b0273c2e2fb93d1c4c6c6d2ef_crop_north.jpg?1415826103&w=3072&h=2048"
+
+#Vinny Testaverde
+my_data2[15,5] <- "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Vinny_Testaverde_1.jpg/800px-Vinny_Testaverde_1.jpg"
+
+
+#Troy
+my_data2[17,5] <- "https://pbs.twimg.com/profile_images/1326016006066728960/31ta_zBu_400x400.jpg"
+my_data2[19,5] <- "https://pbs.twimg.com/profile_images/1326016006066728960/31ta_zBu_400x400.jpg"
+
+#Quincy
+my_data2[20,5] <- "https://vidsig-bucket-production-public.s3-us-west-2.amazonaws.com/users/6b9363c3-4539-4024-abac-9b14e0869659/picture/1603649947619_240x240.jpg"
+```
+
+```{r}
+my_data2[1,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[4,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[7,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[6,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[10,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[11,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+my_data2[16,5] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/5209.png"
+```
+
+```{r}
+ggplot(data = my_data2, mapping = aes(x = Yds, y = TD)) +
+  geom_point() +
+  #geom_image(mapping = aes(x = Yds, y = TD, image = headshot), size = 0.08) +
+  geom_text_repel(mapping = aes(x = Yds, y = TD, label = paste(Year, "\n", Player)),size = 2) +
+  theme_bw() +
+  labs(
+    x = "Passing Yards",
+    y = "Passing TDs",
+    title = "15 Best Cowboys QB Seasons",
+    subtitle = "In Terms of Passing Yards",
+    caption = "Data from PFR | Graphic by Alex McKeever"
+  ) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10), limits=c(3000,5200))
+    scale_x_continuous(breaks = pretty_breaks(n = 10), limits=c(10,40))
+
+
+```
