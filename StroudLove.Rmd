@@ -1,0 +1,172 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(ggimage)
+library(ggrepel)
+library(scales)
+```
+
+```{r}
+teams <- load_teams()
+```
+
+```{r}
+players <- load_players() %>%
+  filter(years_of_experience < 5,
+         status == "ACT") %>%
+  select(-15)
+```
+
+```{r}
+data <- read.csv("JLOVE.csv") %>%
+  rename(team_abbr = Opp)
+```
+
+```{r}
+data <- data %>%
+  rename(last_name = Player) %>%
+  left_join(players, by = "last_name")
+```
+
+```{r}
+data[8,2] <- "LA"
+```
+
+```{r}
+data <- data %>%
+  left_join(teams)
+```
+
+```{r}
+Ldata <- data %>% 
+  filter(last_name == "Love")
+Sdata <- data %>% 
+  filter(last_name == "Stroud")
+```
+
+```{r, message = FALSE}
+ggplot(data = Ldata, mapping = aes(x = Week, y = EPAP)) +
+  geom_line(linewidth = 0.2)     +
+  geom_smooth(color = "darkgreen", se = FALSE) +
+    geom_hline(aes(yintercept = 0), color="darkred", size = 1,linetype = "dashed") +
+
+  geom_image(mapping = aes(x = Week, y = EPAP, image = team_logo_espn), size = 0.08) +
+
+ geom_label(mapping = aes(x = Week, y = EPAP, label = paste(EPAP)), nudge_y = + 0.15, size = 3.5) +
+  
+scale_x_continuous(breaks = pretty_breaks(n = 20),limits=c(1,20)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 8),limits=c(-0.5,1.4)) +
+
+  theme_bw() + 
+  theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank()
+      ) +
+  labs(
+    x = "Week",
+    subtitle = "The History of Jordan Love's EPA/Play | 2023 Season",
+    y = "EPA/Play",
+    title = "Can You Feel the Love Tonight?",
+    caption = "Data from Ben Baldwin | Graphic by Alex McKeever") 
+
+```
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(data = Sdata, mapping = aes(x = Week, y = EPAP)) +
+  geom_line(linewidth = 0.2)     +
+  geom_smooth(color = "darkblue", se = FALSE) +
+    geom_hline(aes(yintercept = 0), color="darkred", size = 1,linetype = "dashed") +
+
+  geom_image(mapping = aes(x = Week, y = EPAP, image = team_logo_espn), size = 0.08) +
+
+ geom_label(mapping = aes(x = Week, y = EPAP, label = paste(EPAP)), nudge_y = + 0.15, size = 3.5) +
+  
+scale_x_continuous(breaks = pretty_breaks(n = 20),limits=c(1,20)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 8),limits=c(-0.5,1)) +
+
+  theme_bw() + 
+  theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank()
+      ) +
+  labs(
+    x = "Week",
+    subtitle = "The History of C.J. Strouds's EPA/Play | 2023 Season",
+    y = "EPA/Play",
+    title = "The Star in Texas",
+    caption = "Data from Ben Baldwin | Graphic by Alex McKeever") 
+```
+
+```{r}
+data[1,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[2,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[3,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[4,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[5,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[6,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[7,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[8,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[9,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[10,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[11,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[12,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[13,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[14,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[15,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[16,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[17,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[18,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[19,24] <- "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4036378.png&w=350&h=254"
+data[20,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[21,24]  <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[22,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[23,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[24,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[25,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[26,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[27,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[28,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[29,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[30,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[31,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[32,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[33,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[34,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[35,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[36,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[37,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+data[38,24] <-"https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4432577.png&w=350&h=254"
+```
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = data, mapping = aes(x = Week, y = EPAP)) +
+  geom_smooth(aes(group = last_name, color = last_name), se = FALSE) +
+  geom_line(aes(color = last_name),linewidth = 0.2)     +
+
+    geom_hline(aes(yintercept = 0), color="darkred", size = 1,linetype = "dashed") +
+
+ geom_image(mapping = aes(x = Week, y = EPAP, image = headshot), size = 0.1) +
+   geom_image(mapping = aes(x = Week, y = EPAP, image = team_logo_espn), size = 0.05, nudge_y = -0.1) +
+
+ scale_color_manual(values=c("darkgreen", "darkblue")) +
+
+  
+scale_x_continuous(breaks = pretty_breaks(n = 20),limits=c(1,20)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 8),limits=c(-0.5,1.2)) +
+
+  theme_bw() + 
+  theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        legend.position = "none"
+      ) +
+  labs(
+    x = "Week",
+    subtitle = "Comparison of Stroud's and Love's EPA/Play | 2023 Season",
+    y = "EPA/Play",
+    title = "The Debate of Stroud and Love",
+    caption = "Data from Ben Baldwin | Graphic by Alex McKeever") 
+```
