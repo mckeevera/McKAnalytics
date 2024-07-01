@@ -1,4 +1,6 @@
-This is a Repo for Alex McKeever's NFL Statistical Work
+This is a Repo for Alex McKeever's Projects for McK Analytics
+
+Files are organized by sport...
 
 Files are roughly sorted by player position (wide receiver files are in WRs, kicker files in Kickers) though there are some exceptions
 Each project should be within its own folder with a readme describing what the purpose of the file is
