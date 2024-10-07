@@ -3,7 +3,7 @@
 library(tidyverse)
 library(nflverse)
 library(ggimage)
-data <- load_pbp(2023)
+data <- nflfastR::load_pbp(2023)
 players <- load_players()
 teams <- load_teams()
 ```

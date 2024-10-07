@@ -1,0 +1,200 @@
+```{r}
+library(nflverse)
+library(tidyverse)
+library(ggimage)
+library(ggrepel)
+library(scales)
+```
+
+```{r}
+data <- load_pbp(2024)
+```
+
+```{r}
+runs <- data %>%
+  filter(penalty == 0) %>%
+  filter(play_type == "run")
+```
+
+```{r}
+dallas <- runs %>%
+  filter(posteam == "DAL") 
+```
+
+```{r}
+ggplot() +
+  geom_density(aes(x = yards_gained), data = runs, color = "green") +
+    geom_density(aes(x = yards_gained), data = dallas, color = "blue") + 
+   scale_x_continuous(breaks = pretty_breaks(n = 15), limits=c(-10,20)) +
+  theme_bw()
+```
+
+```{r}
+pass <- data %>% filter(penalty == 0) %>% filter(play_type == "pass")
+dallaspass <- pass %>%
+  filter(posteam == "DAL") 
+```
+
+```{r}
+ggplot() +
+  geom_density(aes(x = yards_gained), data = pass, color = "green") +
+    geom_density(aes(x = yards_gained), data = dallaspass, fill = "blue", alpha = 0.1) + 
+   scale_x_continuous(breaks = pretty_breaks(n = 15), limits=c(-10,40)) +
+  theme_bw()
+```
+
+```{r}
+runs2 <- runs %>%
+  group_by(posteam) %>%
+  summarise(RunYPC = mean(yards_gained)) 
+```
+
+```{r}
+pass2 <- pass %>%
+  group_by(posteam) %>%
+  summarise(PassYPC = mean(yards_gained)) 
+```
+
+```{r}
+datap <- data.frame(runs2, pass2)
+```
+
+```{r}
+lm(PassYPC ~ RunYPC, data = datap)
+```
+
+```{r}
+ggplot(data = datap, aes(x = RunYPC, y = PassYPC)) +
+  geom_line(stat = "smooth", method = "lm", color = "blue", linewidth = 1, alpha = 0.55) +
+  geom_abline(intercept = 12, slope = -2.15378) +
+  geom_abline(intercept = 14, slope = -2.15378) +
+  geom_abline(intercept = 16, slope = -2.15378) +
+  geom_abline(intercept = 18, slope = -2.15378) +
+  geom_abline(intercept = 20, slope = -2.15378) +
+  geom_abline(intercept = 22, slope = -2.15378) +
+  geom_abline(intercept = 13, slope = -2.15378) +
+  geom_abline(intercept = 15, slope = -2.15378) +
+  geom_abline(intercept = 17, slope = -2.15378) +
+  geom_abline(intercept = 19, slope = -2.15378) +
+  geom_abline(intercept = 21, slope = -2.15378) +
+
+  nflplotR::geom_mean_lines(aes(v_var = RunYPC, h_var = PassYPC), color = "black") +
+  nflplotR::geom_nfl_logos(aes(team_abbr = posteam), width = 0.055, alpha = 0.75) +
+  scale_x_continuous(breaks = pretty_breaks(n = 12)) +
+  scale_y_continuous(breaks = pretty_breaks(n = 12)) +
+  labs(x = "Rushing Yards per Attempt",
+       y = "Passing Yards per Attempt",
+       title = "Team Run/Pass Performance",
+       subtitle = "2024 Regular Season | Weeks 1-5 Pre-SNF",
+       caption = "Data from NFLverse | Some code inspired by Brad J. Congelio / Ben Baldwin | Graphic by Alex McKeever") +
+  theme_bw()  +
+    geom_label(
+    label="Good at Running \n Bad at Passing", x=5.7, y=4, label.padding = unit(0.2, "lines"), label.size = 0.1,
+    size = 3, color = "black", fill="lightgray") + 
+  geom_label(
+    label="Good at Running \n Good at Passing", x=5.7, y=7.5, label.padding = unit(0.2, "lines"), label.size = 0.1,
+    size = 3, color = "black", fill="#90D989") + 
+  geom_label(
+    label="Bad at Running \n Bad at Passing", x=3.7, y=4, label.padding = unit(0.2, "lines"), label.size = 0.1,
+    size = 3, color = "black", fill="#DEA7E9") + 
+  geom_label(
+    label="Bad at Running \n Good at Passing", x=3.7, y=7.5, label.padding = unit(0.2, "lines"), label.size = 0.1,
+    size = 3, color = "black", fill="lightgray") 
+```
+
+```{r}
+datan <-data %>%
+  filter(play_type %in% c("run", "pass")) %>%
+  filter(wp <= 0.80) %>%
+    filter(wp >= 0.20) %>%
+
+  filter(down == 1 | down == 2) %>%
+  mutate(Run = case_when(
+    play_type == "run" ~ 1,
+    TRUE ~ 0
+  )) %>%
+  mutate(Pass = case_when(
+    play_type == "pass" ~ 1,
+    TRUE ~ 0
+  )) %>%
+  group_by(posteam) %>%
+  summarise(RunRate = mean(Run),
+            PassRate = mean(Pass))
+```
+
+```{r}
+teams <- load_teams() %>%
+  mutate(posteam = team_abbr)
+```
+
+```{r}
+datan <- datan %>%
+  left_join(teams, by = 'posteam')
+```
+
+```{r}
+ggplot(data = datan) +
+  geom_col(mapping = aes(y = PassRate, fill = team_color, x = reorder(posteam, PassRate, decreasing = TRUE)), position = "stack", alpha = 0.9) +
+    scale_fill_identity() +
+
+  scale_y_continuous(breaks = pretty_breaks(n = 12)) +
+
+  nflplotR::geom_nfl_logos(aes(team_abbr = posteam, y = PassRate, x = reorder(posteam, PassRate)), width = 0.037, alpha = 0.75) +
+
+  labs(x = "Team",
+       y = "Early Down Pass Rate",
+       title = "Early Down Pass Rates",
+       subtitle = "2024 Regular Season | 1st and 2nd Downs | 20-80% Win Probability | Weeks 1-5 Pre-SNF",
+       caption = "Data from NFLverse | Inspired by Ben Baldwin | Graphic by Alex McKeever") +
+  theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1)) 
+
+```
+
+```{r}
+#Making the plot
+ggplot(data = datan) +
+  geom_col(mapping = aes(x = PassRate, y = reorder(posteam, PassRate), fill = team_color)) +
+  scale_fill_identity() +
+  theme_light() + 
+  labs(
+    x = "Number of Squids",
+    y = "Player",
+    title = "The 2023 Squid Leaders",
+    subtitle = "2023 Regular Season | A 'Squid' consists of having 10+ tackles and assists in a game",
+    caption = "Data from nflverse | Graphic by Alex McKeever"
+ ) +
+  theme(legend.position = "none")
+
+
+```
+
+```{r}
+datag <-data %>%
+  filter(play_type %in% c("run", "pass")) %>%
+  filter(wp <= 0.80) %>%
+    filter(wp >= 0.20) %>%
+  filter(posteam == "GB") %>%
+
+  filter(down == 1 | down == 2) %>%
+  mutate(Run = case_when(
+    play_type == "run" ~ 1,
+    TRUE ~ 0
+  )) %>%
+  mutate(Love = case_when(
+    week == 1 ~ 1,
+    week == 4 ~ 1,
+    week == 5 ~ 1,
+    TRUE ~ 0
+  )) %>%
+  mutate(Pass = case_when(
+    play_type == "pass" ~ 1,
+    TRUE ~ 0
+  )) %>%
+  group_by(Love)
+
+```
+
+```{r}
+datag
+```
